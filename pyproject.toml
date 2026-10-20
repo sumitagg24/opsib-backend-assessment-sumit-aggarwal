@@ -1,0 +1,51 @@
+[project]
+name = "opsib-backend"
+version = "0.1.0"
+description = "OPSiB Backend Engineering Assessment - Retail data integration, exception detection and task reliability"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "sqlalchemy>=2.0.25",
+    "psycopg2-binary>=2.9.9",
+    "alembic>=1.13.1",
+    "pydantic>=2.5.3",
+    "pydantic-settings>=2.1.0",
+    "python-dateutil>=2.8.2",
+    "decimal>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-asyncio>=0.23.8,<0.24.0",
+    "ruff>=0.1.9",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency markers are immutable callables by design.
+extend-immutable-calls = ["fastapi.File", "fastapi.Query", "fastapi.Depends"]
+
+[tool.ruff.lint.isort]
+# The `alembic/` migration directory shares a name with the installed package.
+known-third-party = ["alembic"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+
+[tool.alembic]
+script_location = "alembic"
+prepend_run_to_context = true
+
+[tool.alembic.ini.options]
+sqlalchemy.url = "postgresql://opsib:opsib@localhost:5432/opsib"

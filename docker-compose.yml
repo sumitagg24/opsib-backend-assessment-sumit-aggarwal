@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: opsib-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-opsib}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opsib}
+      POSTGRES_DB: ${POSTGRES_DB:-opsib}
+    ports:
+      # Host port is overridable so a local PostgreSQL already bound to 5432 does not conflict:
+      #   POSTGRES_HOST_PORT=5433 docker compose up -d
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - opsib_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-opsib} -d $${POSTGRES_DB:-opsib}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Optional application container. Not started by a plain `docker compose up -d`
+  # so that the documented host-based workflow (alembic + uvicorn on :8000) stays free.
+  app:
+    build: .
+    container_name: opsib-app
+    profiles: ["app"]
+    restart: unless-stopped
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      APP_DEBUG: "false"
+      FROZEN_EVALUATION_TIME: ${FROZEN_EVALUATION_TIME:-2026-10-16T15:00:00+05:30}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-opsib}:${POSTGRES_PASSWORD:-opsib}@db:5432/${POSTGRES_DB:-opsib}
+      SHIFT_FRESHNESS_HOURS: ${SHIFT_FRESHNESS_HOURS:-2}
+      RECONCILIATION_TOLERANCE_EA: ${RECONCILIATION_TOLERANCE_EA:-0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    ports:
+      - "${APP_HOST_PORT:-8000}:8000"
+    volumes:
+      - ./fixtures:/app/fixtures:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  opsib_pgdata:
