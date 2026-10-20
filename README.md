@@ -335,7 +335,7 @@ creates it if the role is allowed to; otherwise run `createdb opsib_test` first)
 ```bash
 export TEST_DATABASE_URL=postgresql://opsib:opsib@localhost:5432/opsib_test
 
-# All tests (60)
+# All tests (61, including 32 real-PostgreSQL end-to-end tests)
 python -m pytest -q
 
 # Real PostgreSQL end-to-end suite (32 tests, uses the Alembic migration)
